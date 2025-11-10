@@ -18,10 +18,8 @@ variable "bq_dataset" {
   type = string
 }
 
-# Use SA from IAM module by data or pass it in; here we create a small SA if not passed
-resource "google_service_account" "ingest_runner" {
-  account_id   = "ingest-runner"
-  display_name = "Ingest Runner"
+variable "service_account_email" {
+  type = string
 }
 
 resource "google_cloud_run_v2_service" "ingest" {
@@ -29,7 +27,8 @@ resource "google_cloud_run_v2_service" "ingest" {
   location = var.region
 
   template {
-    service_account = google_service_account.ingest_runner.email
+    service_account = var.service_account_email
+
     containers {
       image = var.image_ref
 
@@ -47,6 +46,13 @@ resource "google_cloud_run_v2_service" "ingest" {
         name  = "BQ_TBL"
         value = "raw_fx_rates"
       }
+
+      resources {
+        limits = {
+          cpu    = "1000m"
+          memory = "1Gi"   # was 512Mi
+        }
+      }
     }
 
     scaling {
@@ -57,26 +63,26 @@ resource "google_cloud_run_v2_service" "ingest" {
     timeout = "60s"
   }
 
-  ingress = "ingress internal-and-cloud-load-balancing" # not public
+  ingress = "INGRESS_TRAFFIC_ALL"
 }
 
 # Least-privilege for the runtime SA on GCS & BigQuery
 resource "google_project_iam_member" "ingest_bq_jobuser" {
   project = var.project_id
   role    = "roles/bigquery.jobUser"
-  member  = "serviceAccount:${google_service_account.ingest_runner.email}"
+  member  = "serviceAccount:${var.service_account_email}"
 }
 
 resource "google_bigquery_dataset_iam_member" "ingest_bq_editor" {
   dataset_id = var.bq_dataset
   role       = "roles/bigquery.dataEditor"
-  member     = "serviceAccount:${google_service_account.ingest_runner.email}"
+  member     = "serviceAccount:${var.service_account_email}"
 }
 
 resource "google_storage_bucket_iam_member" "ingest_gcs" {
   bucket = var.bucket_name
   role   = "roles/storage.objectAdmin"
-  member = "serviceAccount:${google_service_account.ingest_runner.email}"
+  member = "serviceAccount:${var.service_account_email}"
 }
 
 output "url" {
@@ -84,5 +90,5 @@ output "url" {
 }
 
 output "sa_email" {
-  value = google_service_account.ingest_runner.email
+  value = var.service_account_email
 }
