@@ -1,0 +1,6 @@
+[
+    {"name":"date","type":"DATE","mode":"NULLABLE"},
+    {"name":"currency","type":"STRING","mode":"NULLABLE"},
+    {"name":"rate","type":"FLOAT","mode":"NULLABLE"},
+    {"name":"ingestion_date","type":"DATE","mode":"REQUIRED"}
+    ]
