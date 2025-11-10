@@ -115,6 +115,23 @@ env/
 # PyCharm settings
 .idea/
 
+# Terraform
+.terraform/
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+terraform.tfvars
+terraform.tfvars.json
+*.tfplan
+
 # System files
 .DS_Store
 Thumbs.db
